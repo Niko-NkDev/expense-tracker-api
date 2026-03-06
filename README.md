@@ -16,6 +16,7 @@ Permite:
 - TypeScript
 - UUID (generación de identificadores únicos)
 - CORS
+ - Jest + ts-jest (pruebas unitarias)
 
 ---
 
@@ -91,6 +92,9 @@ npm install
 ## Scripts disponibles
 
 Definidos en `package.json`:
+
+- `npm test`
+  - Ejecuta la suite de pruebas unitarias con **Jest** sobre la capa de servicios y controladores.
 
 - `npm run dev`
   - Levanta el servidor en modo desarrollo con **ts-node-dev**.
@@ -275,6 +279,25 @@ Ejemplo de respuesta:
 
 ---
 
+## Pruebas unitarias (Jest)
+
+El proyecto incluye pruebas unitarias escritas con **Jest** y **ts-jest**.
+
+- Configuración principal en `jest.config.cjs`.
+- Pruebas actuales:
+  - `src/services/expense.service.test.ts`: lógica de negocio (creación, filtrado, actualización, eliminación y resumen de gastos).
+  - `src/controllers/expense.controller.test.ts`: capa HTTP (validación de categorías, códigos de estado y respuestas), mockeando la capa de servicios.
+
+### Ejecutar las pruebas
+
+```bash
+npm test
+```
+
+Esto ejecuta toda la suite y muestra el resultado de los tests.
+
+---
+
 ## Pruebas rápidas con Postman / Insomnia
 
 1. Asegúrate de haber ejecutado:
@@ -339,4 +362,4 @@ Ejemplo de respuesta:
 - Autenticación y autorización (usuarios, login, etc.).
 - Paginación y ordenamiento en el listado de gastos.
 - Validación más avanzada con librerías como `zod` o `joi`.
-- Tests automatizados (unitarios e integrados).
+- Pruebas de integración/end-to-end sobre rutas y servidor (por ejemplo usando `supertest`).
