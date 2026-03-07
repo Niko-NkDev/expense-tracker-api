@@ -3,12 +3,13 @@ import { Expense, ExpenseCategory } from "../models/expense.model";
 import { expenses } from "../data/database";
 
 export const getAllExpenses = (
+  userId: string,
   category?: ExpenseCategory,
   startDate?: string,
   endDate?: string
 ): Expense[] => {
 
-  let result = [...expenses];
+  let result = expenses.filter(e => e.userId === userId);
 
   if (category) {
     result = result.filter(e => e.category === category);
@@ -27,10 +28,14 @@ export const getAllExpenses = (
   return result;
 };
 
-export const createExpense = (data: Omit<Expense, "id">): Expense => {
+export const createExpense = (
+  userId: string,
+  data: Omit<Expense, "id" | "userId">
+): Expense => {
 
   const newExpense: Expense = {
     id: uuid(),
+    userId,
     ...data
   };
 
@@ -40,11 +45,12 @@ export const createExpense = (data: Omit<Expense, "id">): Expense => {
 };
 
 export const updateExpense = (
+  userId: string,
   id: string,
-  data: Partial<Expense>
+  data: Partial<Omit<Expense, "userId">>
 ): Expense | null => {
 
-  const index = expenses.findIndex(e => e.id === id);
+  const index = expenses.findIndex(e => e.id === id && e.userId === userId);
 
   if (index === -1) return null;
 
@@ -53,9 +59,9 @@ export const updateExpense = (
   return expenses[index];
 };
 
-export const deleteExpense = (id: string): boolean => {
+export const deleteExpense = (userId: string, id: string): boolean => {
 
-  const index = expenses.findIndex(e => e.id === id);
+  const index = expenses.findIndex(e => e.id === id && e.userId === userId);
 
   if (index === -1) return false;
 
@@ -64,13 +70,15 @@ export const deleteExpense = (id: string): boolean => {
   return true;
 };
 
-export const getSummary = () => {
+export const getSummary = (userId: string) => {
 
-  const total = expenses.reduce((sum, e) => sum + e.amount, 0);
+  const userExpenses = expenses.filter(e => e.userId === userId);
+
+  const total = userExpenses.reduce((sum, e) => sum + e.amount, 0);
 
   const byCategory: Record<string, number> = {};
 
-  expenses.forEach(e => {
+  userExpenses.forEach(e => {
     byCategory[e.category] = (byCategory[e.category] || 0) + e.amount;
   });
 

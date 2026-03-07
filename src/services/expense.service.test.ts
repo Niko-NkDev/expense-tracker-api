@@ -25,11 +25,12 @@ describe("expense.service", () => {
       description: "Almuerzo"
     };
 
-    const created = createExpense(data);
+    const created = createExpense("user-1", data);
 
     expect(created).toMatchObject({
       ...data,
-      id: "mock-id-1"
+      id: "mock-id-1",
+      userId: "user-1"
     });
 
     expect(expenses).toHaveLength(1);
@@ -37,116 +38,126 @@ describe("expense.service", () => {
   });
 
   test("getAllExpenses devuelve todos los gastos cuando no hay filtros", () => {
-    createExpense({
+    createExpense("user-1", {
       amount: 50,
       category: "Comida" as ExpenseCategory,
       date: "2025-01-01"
     });
-    createExpense({
+    createExpense("user-1", {
       amount: 20,
       category: "Transporte" as ExpenseCategory,
       date: "2025-01-02"
     });
 
-    const result = getAllExpenses();
+    const result = getAllExpenses("user-1");
 
     expect(result).toHaveLength(2);
   });
 
   test("getAllExpenses filtra por categoría", () => {
-    createExpense({
+    createExpense("user-1", {
       amount: 50,
       category: "Comida" as ExpenseCategory,
       date: "2025-01-01"
     });
-    createExpense({
+    createExpense("user-1", {
       amount: 20,
       category: "Transporte" as ExpenseCategory,
       date: "2025-01-02"
     });
 
-    const result = getAllExpenses("Comida");
+    const result = getAllExpenses("user-1", "Comida");
 
     expect(result).toHaveLength(1);
     expect(result[0].category).toBe("Comida");
   });
 
   test("getAllExpenses filtra por rango de fechas", () => {
-    createExpense({
+    createExpense("user-1", {
       amount: 50,
       category: "Comida" as ExpenseCategory,
       date: "2025-01-01"
     });
-    createExpense({
+    createExpense("user-1", {
       amount: 20,
       category: "Transporte" as ExpenseCategory,
       date: "2025-01-10"
     });
 
-    const result = getAllExpenses(undefined, "2025-01-02", "2025-01-09");
+    const result = getAllExpenses(
+      "user-1",
+      undefined,
+      "2025-01-02",
+      "2025-01-09"
+    );
 
     expect(result).toHaveLength(0);
 
-    const result2 = getAllExpenses(undefined, "2025-01-01", "2025-01-10");
+    const result2 = getAllExpenses(
+      "user-1",
+      undefined,
+      "2025-01-01",
+      "2025-01-10"
+    );
     expect(result2).toHaveLength(2);
   });
 
   test("updateExpense actualiza un gasto existente", () => {
-    const created = createExpense({
+    const created = createExpense("user-1", {
       amount: 50,
       category: "Comida" as ExpenseCategory,
       date: "2025-01-01"
     });
 
-    const updated = updateExpense(created.id, { amount: 80 });
+    const updated = updateExpense("user-1", created.id, { amount: 80 });
 
     expect(updated).not.toBeNull();
     expect(updated!.amount).toBe(80);
   });
 
   test("updateExpense devuelve null si no encuentra el gasto", () => {
-    const updated = updateExpense("id-inexistente", { amount: 80 });
+    const updated = updateExpense("user-1", "id-inexistente", { amount: 80 });
 
     expect(updated).toBeNull();
   });
 
   test("deleteExpense elimina un gasto existente", () => {
-    const created = createExpense({
+    const created = createExpense("user-1", {
       amount: 50,
       category: "Comida" as ExpenseCategory,
       date: "2025-01-01"
     });
 
-    const result = deleteExpense(created.id);
+    const result = deleteExpense("user-1", created.id);
 
     expect(result).toBe(true);
     expect(expenses).toHaveLength(0);
   });
 
   test("deleteExpense devuelve false si no encuentra el gasto", () => {
-    const result = deleteExpense("id-inexistente");
+    const result = deleteExpense("user-1", "id-inexistente");
 
     expect(result).toBe(false);
   });
 
   test("getSummary calcula total y por categoría", () => {
-    createExpense({
+    createExpense("user-1", {
       amount: 50,
       category: "Comida" as ExpenseCategory,
       date: "2025-01-01"
     });
-    createExpense({
+    createExpense("user-1", {
       amount: 20,
       category: "Comida" as ExpenseCategory,
       date: "2025-01-02"
     });
-    createExpense({
+    createExpense("user-1", {
       amount: 30,
       category: "Transporte" as ExpenseCategory,
       date: "2025-01-03"
     });
 
-    const summary = getSummary();
+    const summary = getSummary("user-1");
 
     expect(summary.total).toBe(100);
     expect(summary.byCategory["Comida"]).toBe(70);

@@ -35,7 +35,8 @@ describe("expense.controller - getExpenses", () => {
 
   test("devuelve 400 si la categoría es inválida", () => {
     const req = {
-      query: { category: "Invalida" }
+      query: { category: "Invalida" },
+      user: { userId: "user-1", username: "usuario1" }
     } as unknown as Request;
 
     const res = createMockResponse();
@@ -57,7 +58,8 @@ describe("expense.controller - getExpenses", () => {
         category: "Comida",
         startDate: "2025-01-01",
         endDate: "2025-01-31"
-      }
+      },
+      user: { userId: "user-1", username: "usuario1" }
     } as unknown as Request;
 
     const res = createMockResponse();
@@ -68,6 +70,7 @@ describe("expense.controller - getExpenses", () => {
     getExpenses(req, res);
 
     expect(mockedService.getAllExpenses).toHaveBeenCalledWith(
+      "user-1",
       "Comida",
       "2025-01-01",
       "2025-01-31"
@@ -83,7 +86,8 @@ describe("expense.controller - createExpense", () => {
 
   test("devuelve 400 si la categoría es inválida", () => {
     const req = {
-      body: { category: "Invalida" }
+      body: { category: "Invalida" },
+      user: { userId: "user-1", username: "usuario1" }
     } as unknown as Request;
 
     const res = createMockResponse();
@@ -108,7 +112,8 @@ describe("expense.controller - createExpense", () => {
     };
 
     const req = {
-      body: reqBody
+      body: reqBody,
+      user: { userId: "user-1", username: "usuario1" }
     } as unknown as Request;
 
     const res = createMockResponse();
@@ -118,7 +123,10 @@ describe("expense.controller - createExpense", () => {
 
     createExpense(req, res);
 
-    expect(mockedService.createExpense).toHaveBeenCalledWith(reqBody);
+    expect(mockedService.createExpense).toHaveBeenCalledWith(
+      "user-1",
+      reqBody
+    );
     expect(res.status).toHaveBeenCalledWith(201);
     expect(res.json).toHaveBeenCalledWith(created);
   });
@@ -132,7 +140,8 @@ describe("expense.controller - updateExpense", () => {
   test("devuelve 400 si la categoría es inválida", () => {
     const req = {
       params: { id: "1" },
-      body: { category: "Invalida" }
+      body: { category: "Invalida" },
+      user: { userId: "user-1", username: "usuario1" }
     } as unknown as Request;
 
     const res = createMockResponse();
@@ -151,7 +160,8 @@ describe("expense.controller - updateExpense", () => {
   test("devuelve 404 si no encuentra el gasto", () => {
     const req = {
       params: { id: "1" },
-      body: { amount: 50 }
+      body: { amount: 50 },
+      user: { userId: "user-1", username: "usuario1" }
     } as unknown as Request;
 
     const res = createMockResponse();
@@ -160,7 +170,11 @@ describe("expense.controller - updateExpense", () => {
 
     updateExpense(req, res);
 
-    expect(mockedService.updateExpense).toHaveBeenCalledWith("1", { amount: 50 });
+    expect(mockedService.updateExpense).toHaveBeenCalledWith(
+      "user-1",
+      "1",
+      { amount: 50 }
+    );
     expect(res.status).toHaveBeenCalledWith(404);
     expect(res.json).toHaveBeenCalledWith({ message: "Expense not found" });
   });
@@ -168,7 +182,8 @@ describe("expense.controller - updateExpense", () => {
   test("actualiza un gasto existente", () => {
     const req = {
       params: { id: "1" },
-      body: { amount: 80 }
+      body: { amount: 80 },
+      user: { userId: "user-1", username: "usuario1" }
     } as unknown as Request;
 
     const res = createMockResponse();
@@ -178,7 +193,11 @@ describe("expense.controller - updateExpense", () => {
 
     updateExpense(req, res);
 
-    expect(mockedService.updateExpense).toHaveBeenCalledWith("1", { amount: 80 });
+    expect(mockedService.updateExpense).toHaveBeenCalledWith(
+      "user-1",
+      "1",
+      { amount: 80 }
+    );
     expect(res.status).not.toHaveBeenCalledWith(404);
     expect(res.json).toHaveBeenCalledWith(updated);
   });
@@ -191,7 +210,8 @@ describe("expense.controller - deleteExpense", () => {
 
   test("devuelve 404 si no encuentra el gasto", () => {
     const req = {
-      params: { id: "1" }
+      params: { id: "1" },
+      user: { userId: "user-1", username: "usuario1" }
     } as unknown as Request;
 
     const res = createMockResponse();
@@ -200,14 +220,15 @@ describe("expense.controller - deleteExpense", () => {
 
     deleteExpense(req, res);
 
-    expect(mockedService.deleteExpense).toHaveBeenCalledWith("1");
+    expect(mockedService.deleteExpense).toHaveBeenCalledWith("user-1", "1");
     expect(res.status).toHaveBeenCalledWith(404);
     expect(res.json).toHaveBeenCalledWith({ message: "Expense not found" });
   });
 
   test("elimina un gasto existente", () => {
     const req = {
-      params: { id: "1" }
+      params: { id: "1" },
+      user: { userId: "user-1", username: "usuario1" }
     } as unknown as Request;
 
     const res = createMockResponse();
@@ -216,7 +237,7 @@ describe("expense.controller - deleteExpense", () => {
 
     deleteExpense(req, res);
 
-    expect(mockedService.deleteExpense).toHaveBeenCalledWith("1");
+    expect(mockedService.deleteExpense).toHaveBeenCalledWith("user-1", "1");
     expect(res.json).toHaveBeenCalledWith({ message: "Expense deleted" });
   });
 });
@@ -227,7 +248,9 @@ describe("expense.controller - getSummary", () => {
   });
 
   test("devuelve el resumen del servicio", () => {
-    const req = {} as Request;
+    const req = {
+      user: { userId: "user-1", username: "usuario1" }
+    } as unknown as Request;
     const res = createMockResponse();
 
     const summary = {
@@ -239,7 +262,7 @@ describe("expense.controller - getSummary", () => {
 
     getSummary(req, res);
 
-    expect(mockedService.getSummary).toHaveBeenCalled();
+    expect(mockedService.getSummary).toHaveBeenCalledWith("user-1");
     expect(res.json).toHaveBeenCalledWith(summary);
   });
 });
