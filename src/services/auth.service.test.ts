@@ -35,7 +35,8 @@ describe("auth.service", () => {
     const user: User = {
       id: "1",
       username: "usuario1",
-      passwordHash: "hash"
+      passwordHash: "hash",
+      initialBalance: 0
     };
     users.push(user);
 
@@ -51,7 +52,8 @@ describe("auth.service", () => {
     expect(user).toEqual({
       id: "mock-user-id",
       username: "usuario1",
-      passwordHash: "hashed-password"
+      passwordHash: "hashed-password",
+      initialBalance: 0
     });
     expect(users).toHaveLength(1);
     expect(users[0]).toEqual(user);
@@ -61,7 +63,8 @@ describe("auth.service", () => {
     users.push({
       id: "1",
       username: "usuario1",
-      passwordHash: "hash"
+      passwordHash: "hash",
+      initialBalance: 0
     });
 
     await expect(registerUser("usuario1", "otra"))
@@ -72,7 +75,8 @@ describe("auth.service", () => {
     const user: User = {
       id: "1",
       username: "usuario1",
-      passwordHash: "hash"
+      passwordHash: "hash",
+      initialBalance: 0
     };
 
     (mockedBcrypt.compare as jest.Mock).mockResolvedValueOnce(true);
