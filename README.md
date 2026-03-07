@@ -17,6 +17,7 @@ Permite:
 - UUID (generación de identificadores únicos)
 - CORS
  - Jest + ts-jest (pruebas unitarias)
+ - bcryptjs + jsonwebtoken (autenticación básica con usuario/contraseña)
 
 ---
 
@@ -122,6 +123,50 @@ Por defecto, el servidor se levanta en:
 
 ## Endpoints de la API
 
+### 0. Autenticación y usuarios
+
+La API incluye un sistema sencillo de autenticación en memoria basado en **usuario** y **password**.
+
+- **POST** `/auth/register`
+  - Registra un nuevo usuario.
+  - Body (JSON):
+    ```json
+    {
+      "username": "usuario1",
+      "password": "mi-password-segura"
+    }
+    ```
+  - Respuestas:
+    - `201 Created`:
+      ```json
+      {
+        "id": "uuid",
+        "username": "usuario1",
+        "token": "jwt"
+      }
+      ```
+    - `400` si faltan campos.
+    - `409` si el usuario ya existe.
+
+- **POST** `/auth/login`
+  - Inicia sesión con usuario y contraseña.
+  - Body (JSON):
+    ```json
+    {
+      "username": "usuario1",
+      "password": "mi-password-segura"
+    }
+    ```
+  - Respuestas:
+    - `200 OK` con `{ id, username, token }`.
+    - `400` si faltan campos.
+    - `401` si las credenciales son inválidas.
+
+- **GET** `/auth/users`
+  - Devuelve la lista de usuarios registrados en memoria (solo `id` y `username`).
+
+> Nota: actualmente los usuarios se almacenan en memoria (no hay base de datos). Al reiniciar el servidor se pierden.
+
 ### 1. Listar gastos (con filtros opcionales)
 
 **GET** `/expenses`
@@ -151,7 +196,7 @@ Respuestas:
 [
   {
     "id": "bd9ac72c-3f67-4056-ab91-9f9a7eb721fe",
-    "amount": 1000,
+    "amount": 10000,
     "category": "Comida",
     "date": "2026-03-06",
     "description": "Almuerzo"
@@ -287,6 +332,8 @@ El proyecto incluye pruebas unitarias escritas con **Jest** y **ts-jest**.
 - Pruebas actuales:
   - `src/services/expense.service.test.ts`: lógica de negocio (creación, filtrado, actualización, eliminación y resumen de gastos).
   - `src/controllers/expense.controller.test.ts`: capa HTTP (validación de categorías, códigos de estado y respuestas), mockeando la capa de servicios.
+  - `src/services/auth.service.test.ts`: registro, búsqueda de usuario, validación de contraseña y generación de tokens.
+  - `src/controllers/auth.controller.test.ts`: registro, login y listado de usuarios en el controlador de auth.
 
 ### Ejecutar las pruebas
 
