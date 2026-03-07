@@ -32,7 +32,8 @@ export const registerUser = async (
   const newUser: User = {
     id: uuid(),
     username,
-    passwordHash
+    passwordHash,
+    initialBalance: 0
   };
 
   users.push(newUser);
@@ -49,4 +50,8 @@ export const validatePassword = async (
 
 export const generateToken = (payload: AuthPayload): string => {
   return jwt.sign(payload, JWT_SECRET, { expiresIn: "1h" });
+};
+
+export const findUserById = (id: string): User | undefined => {
+  return users.find(u => u.id === id);
 };

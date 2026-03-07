@@ -3,7 +3,9 @@
 API RESTful backend para gestionar gastos personales, construida con **Node.js**, **Express** y **TypeScript**.
 
 Permite:
-- Crear, listar, actualizar y eliminar gastos.
+- Autenticar usuarios con JWT (registro y login).
+- Gestionar saldo inicial por usuario y actualizarlo (fijar, sumar o restar saldo).
+- Crear, listar, actualizar y eliminar gastos asociados al usuario autenticado.
 - Filtrar gastos por categoría y rango de fechas.
 - Obtener un resumen agregado de los gastos.
 
@@ -16,8 +18,8 @@ Permite:
 - TypeScript
 - UUID (generación de identificadores únicos)
 - CORS
- - Jest + ts-jest (pruebas unitarias)
- - bcryptjs + jsonwebtoken (autenticación básica con usuario/contraseña)
+- Jest + ts-jest (pruebas unitarias)
+- bcryptjs + jsonwebtoken (autenticación con usuario/contraseña y JWT)
 
 ---
 
@@ -25,17 +27,24 @@ Permite:
 
 ```bash
 src/
-  app.ts              # Configuración de Express y middlewares
-  server.ts           # Punto de entrada del servidor (puerto, listen)
+  app.ts                   # Configuración de Express y middlewares
+  server.ts                # Punto de entrada del servidor (puerto, listen)
   controllers/
-    expense.controller.ts  # Lógica HTTP de la API (req/res)
+    auth.controller.ts     # Lógica HTTP de autenticación y saldo inicial
+    expense.controller.ts  # Lógica HTTP de la API de gastos (req/res)
   services/
+    auth.service.ts        # Lógica de negocio de usuarios, passwords y JWT
     expense.service.ts     # Lógica de negocio para gastos
+  middlewares/
+    auth.middleware.ts     # Middleware para validar y decodificar el JWT
   models/
+    user.model.ts          # Tipos para usuario (User, AuthPayload)
     expense.model.ts       # Tipos/Interfaces de dominio (Expense, ExpenseCategory)
   data/
+    users.ts               # Fuente de datos en memoria (array de usuarios)
     database.ts            # Fuente de datos en memoria (array de gastos)
   routes/
+    auth.routes.ts         # Definición de rutas /auth
     expense.routes.ts      # Definición de rutas /expenses
 ```
 
@@ -43,7 +52,24 @@ src/
 
 ## Modelo de datos
 
-El modelo principal es `Expense` definido en `src/models/expense.model.ts`:
+### Usuario
+
+El modelo de usuario se define en `src/models/user.model.ts`:
+
+```ts
+export interface User {
+  id: string;
+  username: string;
+  passwordHash: string;
+  initialBalance: number; // saldo inicial configurado por el usuario
+}
+```
+
+El campo `initialBalance` representa el saldo inicial del usuario y puede ser modificado mediante los endpoints `/auth/balance`.
+
+### Gasto
+
+El modelo principal de gastos es `Expense` definido en `src/models/expense.model.ts`:
 
 ```ts
 export type ExpenseCategory =
@@ -166,7 +192,40 @@ La API incluye un sistema sencillo de autenticación en memoria basado en **usua
 - **GET** `/auth/users`
   - Devuelve la lista de usuarios registrados en memoria (solo `id` y `username`).
 
-> Nota: actualmente los usuarios se almacenan en memoria (no hay base de datos). Al reiniciar el servidor se pierden.
+- **GET** `/auth/balance`
+  - Devuelve el saldo inicial almacenado para el usuario autenticado.
+  - Requiere header `Authorization: Bearer <token>`.
+  - Respuesta de ejemplo:
+    ```json
+    {
+      "initialBalance": 50000
+    }
+    ```
+
+- **PUT** `/auth/balance`
+  - Actualiza el saldo inicial del usuario autenticado.
+  - Requiere header `Authorization: Bearer <token>`.
+  - Body (JSON):
+    ```json
+    {
+      "amount": 10000,
+      "operation": "set"
+    }
+    ```
+  - Campos:
+    - `amount` (number, obligatorio): valor a aplicar.
+    - `operation` (string, opcional): una de `"set"`, `"add"`, `"subtract"`. Por defecto `"set"`.
+      - `"set"`: fija el saldo inicial exactamente en `amount`.
+      - `"add"`: suma `amount` al saldo actual.
+      - `"subtract"`: resta `amount` al saldo actual.
+  - Respuesta exitosa:
+    ```json
+    {
+      "initialBalance": 60000
+    }
+    ```
+
+> Nota: actualmente los usuarios y su saldo se almacenan en memoria (no hay base de datos). Al reiniciar el servidor se pierden.
 
 ### 1. Listar gastos (con filtros opcionales)
 
@@ -365,8 +424,25 @@ Esto ejecuta toda la suite y muestra el resultado de los tests.
    npm run dev
    ```
 
-2. En Postman / Insomnia:
-   - Crear una nueva request **POST** a `http://localhost:3000/expenses`.
+2. Registrar un usuario de prueba:
+   - Nueva request **POST** a `http://localhost:3000/auth/register`.
+   - Body (JSON):
+     ```json
+     {
+       "username": "usuario1",
+       "password": "mi-password-segura"
+     }
+     ```
+
+3. Iniciar sesión y obtener el token JWT:
+   - **POST** a `http://localhost:3000/auth/login` con el mismo body.
+   - Copiar el campo `token` de la respuesta.
+
+4. Crear un gasto autenticado:
+   - Nueva request **POST** a `http://localhost:3000/expenses`.
+   - Headers:
+     - `Authorization: Bearer <token>`
+     - `Content-Type: application/json`
    - En **Body** → `raw` → `JSON`, poner:
      ```json
      {
@@ -378,12 +454,29 @@ Esto ejecuta toda la suite y muestra el resultado de los tests.
      ```
    - Enviar y verificar la respuesta con `id`.
 
-3. Usar el `id` devuelto para:
+5. Usar el `id` devuelto para:
    - **PUT** `http://localhost:3000/expenses/<ID>`
    - **DELETE** `http://localhost:3000/expenses/<ID>`
 
-4. Consultar resumen:
-   - **GET** `http://localhost:3000/expenses/summary`
+6. Consultar resumen de gastos:
+   - **GET** `http://localhost:3000/expenses/summary` (con el header `Authorization: Bearer <token>`)
+
+7. Consultar y actualizar saldo inicial del usuario:
+   - **GET** `http://localhost:3000/auth/balance` (con `Authorization: Bearer <token>`) para ver el saldo actual.
+   - **PUT** `http://localhost:3000/auth/balance` con body como:
+     ```json
+     {
+       "amount": 50000,
+       "operation": "set"
+     }
+     ```
+     o bien:
+     ```json
+     {
+       "amount": 10000,
+       "operation": "add"
+     }
+     ```
 
 ---
 
@@ -421,7 +514,6 @@ Esto ejecuta toda la suite y muestra el resultado de los tests.
 ## Futuras mejoras
 
 - Persistencia con una base de datos real (PostgreSQL, MongoDB, etc.).
-- Autenticación y autorización (usuarios, login, etc.).
 - Paginación y ordenamiento en el listado de gastos.
 - Validación más avanzada con librerías como `zod` o `joi`.
 - Pruebas de integración/end-to-end sobre rutas y servidor (por ejemplo usando `supertest`).

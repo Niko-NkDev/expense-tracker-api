@@ -3,9 +3,11 @@ import {
   registerUser,
   findUserByUsername,
   validatePassword,
-  generateToken
+  generateToken,
+  findUserById
 } from "../services/auth.service";
 import { users } from "../data/users";
+import { AuthRequest } from "../middlewares/auth.middleware";
 
 export const register = async (req: Request, res: Response) => {
   try {
@@ -80,4 +82,63 @@ export const listUsers = (req: Request, res: Response) => {
   }));
 
   return res.json(safeUsers);
+};
+
+export const getBalance = (req: Request, res: Response) => {
+  const { user } = req as AuthRequest;
+
+  if (!user) {
+    return res.status(401).json({ message: "Token no proporcionado" });
+  }
+
+  const currentUser = findUserById(user.userId);
+
+  if (!currentUser) {
+    return res.status(404).json({ message: "Usuario no encontrado" });
+  }
+
+  return res.json({ initialBalance: currentUser.initialBalance ?? 0 });
+};
+
+export const updateBalance = (req: Request, res: Response) => {
+  const { user } = req as AuthRequest;
+
+  if (!user) {
+    return res.status(401).json({ message: "Token no proporcionado" });
+  }
+
+  const currentUser = findUserById(user.userId);
+
+  if (!currentUser) {
+    return res.status(404).json({ message: "Usuario no encontrado" });
+  }
+
+  const { amount, operation = "set" } = req.body as {
+    amount: number;
+    operation?: "set" | "add" | "subtract";
+  };
+
+  if (typeof amount !== "number" || Number.isNaN(amount)) {
+    return res
+      .status(400)
+      .json({ message: "'amount' debe ser un número válido" });
+  }
+
+  let newBalance = currentUser.initialBalance ?? 0;
+
+  if (operation === "set") {
+    newBalance = amount;
+  } else if (operation === "add") {
+    newBalance += amount;
+  } else if (operation === "subtract") {
+    newBalance -= amount;
+  } else {
+    return res.status(400).json({
+      message: "Operación inválida. Usa 'set', 'add' o 'subtract'"
+    });
+  }
+
+  currentUser.initialBalance = newBalance;
+
+  return res.json({ initialBalance: newBalance });
 };
