@@ -357,7 +357,7 @@ Esto ejecuta toda la suite y muestra el resultado de los tests.
    - En **Body** → `raw` → `JSON`, poner:
      ```json
      {
-       "amount": 1000,
+       "amount": 10000,
        "category": "Comida",
        "date": "2026-03-06",
        "description": "Almuerzo"
@@ -386,20 +386,22 @@ Esto ejecuta toda la suite y muestra el resultado de los tests.
    - Crea un nuevo **Web Service** conectado a tu repositorio de GitHub.
 
 3. **Configurar Build & Start**
-   - *Build Command*: `npm run build`
+  - *Install Command*: `npm install && npm run build` (garantiza instalación + build)
    - *Start Command*: `npm start`
-   - *Node Version*: opcionalmente especificar (ej. 18) en variables de entorno de Render (`NODE_VERSION=18`), si se desea.
+  - *Node Version*:  (`NODE_VERSION=20`).
 
 4. **Deploy**
-   - Render ejecutará `npm install`, luego `npm run build`, y finalmente `npm start`.
-   - Una vez desplegado, tendrás una URL pública tipo:
-     - `https://expense-tracker-api.onrender.com`
-   - Tus endpoints quedarán accesibles como:
-     - `https://expense-tracker-api.onrender.com/expenses`
+   - Render ejecutará el *Install Command* y luego `npm start`.
+   - Una vez desplegado, la API queda disponible en:
+     - `https://expense-tracker-api-98fc.onrender.com`
+   - Endpoints principales en producción:
+     - Auth register: `POST https://expense-tracker-api-98fc.onrender.com/auth/register`
+     - Auth login: `POST https://expense-tracker-api-98fc.onrender.com/auth/login`
+     - Listar gastos: `GET https://expense-tracker-api-98fc.onrender.com/expenses`
 
-5. **Variables de entorno (opcional / futuro)**
-   - Actualmente la API no usa base de datos externa ni variables de entorno.
-   - Si en el futuro se agrega una DB (PostgreSQL, MongoDB, etc.), aquí se documentarían las variables requeridas (por ejemplo `DATABASE_URL`).
+5. **Variables de entorno**
+  - `JWT_SECRET`: secreto usado para firmar los tokens JWT.
+  - `NODE_VERSION`: versión de Node usada por Render (ej. `20`).
 
 ---
 
