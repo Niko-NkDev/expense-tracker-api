@@ -6,8 +6,11 @@ import {
   deleteExpense,
   getSummary
 } from "../controllers/expense.controller";
+import { authMiddleware } from "../middlewares/auth.middleware";
 
 const router = Router();
+
+router.use(authMiddleware);
 
 router.get("/", getExpenses);
 router.post("/", createExpense);

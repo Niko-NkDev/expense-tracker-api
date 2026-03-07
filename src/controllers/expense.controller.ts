@@ -1,8 +1,15 @@
 import { Request, Response } from "express";
 import * as expenseService from "../services/expense.service";
 import { ExpenseCategory, EXPENSE_CATEGORIES } from "../models/expense.model";
+import { AuthRequest } from "../middlewares/auth.middleware";
 
 export const getExpenses = (req: Request, res: Response) => {
+
+  const { user } = req as AuthRequest;
+
+  if (!user) {
+    return res.status(401).json({ message: "Token no proporcionado" });
+  }
 
   const { category, startDate, endDate } = req.query;
 
@@ -22,6 +29,7 @@ export const getExpenses = (req: Request, res: Response) => {
   }
 
   const expenses = expenseService.getAllExpenses(
+    user.userId,
     categoryFilter,
     startDate as string,
     endDate as string
@@ -32,6 +40,12 @@ export const getExpenses = (req: Request, res: Response) => {
 
 export const createExpense = (req: Request, res: Response) => {
 
+  const { user } = req as AuthRequest;
+
+  if (!user) {
+    return res.status(401).json({ message: "Token no proporcionado" });
+  }
+
   const { category } = req.body;
 
   if (!EXPENSE_CATEGORIES.includes(category as ExpenseCategory)) {
@@ -41,12 +55,18 @@ export const createExpense = (req: Request, res: Response) => {
     });
   }
 
-  const expense = expenseService.createExpense(req.body);
+  const expense = expenseService.createExpense(user.userId, req.body);
 
   res.status(201).json(expense);
 };
 
 export const updateExpense = (req: Request, res: Response) => {
+
+  const { user } = req as AuthRequest;
+
+  if (!user) {
+    return res.status(401).json({ message: "Token no proporcionado" });
+  }
 
   const id = req.params.id as string;
 
@@ -61,7 +81,7 @@ export const updateExpense = (req: Request, res: Response) => {
     }
   }
 
-  const updated = expenseService.updateExpense(id, req.body);
+  const updated = expenseService.updateExpense(user.userId, id, req.body);
 
   if (!updated) {
     return res.status(404).json({ message: "Expense not found" });
@@ -72,9 +92,15 @@ export const updateExpense = (req: Request, res: Response) => {
 
 export const deleteExpense = (req: Request, res: Response) => {
 
+  const { user } = req as AuthRequest;
+
+  if (!user) {
+    return res.status(401).json({ message: "Token no proporcionado" });
+  }
+
   const id = req.params.id as string;
 
-  const deleted = expenseService.deleteExpense(id);
+  const deleted = expenseService.deleteExpense(user.userId, id);
 
   if (!deleted) {
     return res.status(404).json({ message: "Expense not found" });
@@ -85,7 +111,13 @@ export const deleteExpense = (req: Request, res: Response) => {
 
 export const getSummary = (req: Request, res: Response) => {
 
-  const summary = expenseService.getSummary();
+  const { user } = req as AuthRequest;
+
+  if (!user) {
+    return res.status(401).json({ message: "Token no proporcionado" });
+  }
+
+  const summary = expenseService.getSummary(user.userId);
 
   res.json(summary);
 };

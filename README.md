@@ -55,6 +55,7 @@ export type ExpenseCategory =
 
 export interface Expense {
   id: string;
+  userId: string;      // id del usuario dueño del gasto
   amount: number;
   category: ExpenseCategory;
   date: string;        // ISO string, ej: "2026-03-06"
@@ -171,6 +172,10 @@ La API incluye un sistema sencillo de autenticación en memoria basado en **usua
 
 **GET** `/expenses`
 
+Requiere autenticación vía **Bearer token** en el header:
+
+- `Authorization: Bearer <jwt-devuelto-en-/auth/login>`
+
 Query params opcionales:
 - `category`: categoría válida (Comida, Transporte, Entretenimiento, Vivienda, Salud)
 - `startDate`: fecha de inicio (string, ej. `2025-01-01`)
@@ -221,6 +226,7 @@ Si se pasa una `category` inválida:
 
 Headers:
 - `Content-Type: application/json`
+- `Authorization: Bearer <token>`
 
 Body (JSON):
 
@@ -263,6 +269,7 @@ Parámetros de ruta:
 
 Headers:
 - `Content-Type: application/json`
+- `Authorization: Bearer <token>`
 
 Body (JSON): puedes enviar campos parciales o todos:
 
@@ -286,6 +293,9 @@ Notas:
 Parámetros de ruta:
 - `:id`: identificador del gasto.
 
+Headers:
+- `Authorization: Bearer <token>`
+
 Respuestas:
 - 200 OK si se elimina correctamente:
   ```json
@@ -305,6 +315,9 @@ Respuestas:
 ### 5. Resumen de gastos
 
 **GET** `/expenses/summary`
+
+Headers:
+- `Authorization: Bearer <token>`
 
 Calcula:
 - `total`: suma de todos los montos (`amount`).
